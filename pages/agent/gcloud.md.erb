@@ -51,3 +51,12 @@ For persistent deployments we suggest [using a secret environment variable](http
 
 See [our Docker setup instructions](/docs/agent/docker) for more details on configuring and customising the Buildkite Agent running in Docker.
 
+## Upload artifacts to Google Cloud Storage
+
+You can upload [artifacts](/docs/builds/artifacts) created by your builds to your own [Google Cloud Storage](https://cloud.google.com/storage) bucket. Configure the agent to target your bucket by exporting the following environment variables using an [environment agent hook](/docs/agent/hooks) (this can not be set via the Buildkite web interface, API, or during pipeline upload):
+
+```shell
+export BUILDKITE_ARTIFACT_UPLOAD_DESTINATION="gs://my-bucket/$BUILDKITE_JOB_ID"
+```
+
+You will need to make sure the agent has permission to do create new objects. If running on Google Compute Engine or Google Container Engine you can grant Storage Write permission to the instance or cluster, or restrict access more specifically using [a service account](https://cloud.google.com/compute/docs/access/service-accounts).
