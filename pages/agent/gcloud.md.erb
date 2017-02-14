@@ -8,3 +8,46 @@ The Buildkite Agent can be run easily on [Google Cloud Platform](https://cloud.g
 
 To run the agent on your own [Google Compute Engine](https://cloud.google.com/compute) instance use whichever installer matches your instance type. For example, launch an instance using the [latest Ubuntu LTS image](https://console.cloud.google.com/launcher?cat=OS&q=ubuntu) and follow [our Ubuntu setup instructions](/docs/agent/ubuntu).
 
+## Run the Agent on Google Container Engine
+
+[Google Container Engine](https://cloud.google.com/container-engine) can also run the Buildkite Agent as a [Docker](https://www.docker.com) container using [Kubernetes](https://kubernetes.io). Make sure to run the container in [privileged mode](https://kubernetes.io/docs/user-guide/pods/#privileged-mode-for-pod-containers) and map the Docker socket and binary into the container as volumes if you wish to [run Docker–based builds](http://buildkite.dev/docs/builds/docker-containerized-builds). For example, create a [deployment](https://kubernetes.io/docs/user-guide/deployments/) on your [container cluster](https://cloud.google.com/container-engine/docs/clusters/) running a single agent:
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: buildkite-agent
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: buildkite-agent
+    spec:
+      containers:
+        - name: buildkite-agent
+          image: buildkite/agent
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          env:
+            - name: BUILDKITE_AGENT_TOKEN
+              value: INSERT-YOUR-AGENT-TOKEN-HERE
+          volumeMounts:
+            - name: docker-binary
+              mountPath: /usr/bin/docker
+            - name: docker-socket
+              mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-binary
+          hostPath: path: /usr/bin/docker
+        - name: docker-socket
+          hostPath: path: /var/run/docker.sock
+```
+
+Increase `replicas` to run more than a single agent.
+
+For persistent deployments we suggest [using a secret environment variable](https://kubernetes.io/docs/user-guide/secrets/#using-secrets-as-environment-variables) for your agent token. You may also want to store an SSH key in a secret volume for accessing your repositories.
+
+See [our Docker setup instructions](/docs/agent/docker) for more details on configuring and customising the Buildkite Agent running in Docker.
+
